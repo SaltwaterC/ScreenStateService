@@ -7,7 +7,8 @@ Unfortunately, this is a power event that it is not available out of the box for
 Under the bonnet, this creates a hidden window to [monitor GUID_CONSOLE_DISPLAY_STATE](https://learn.microsoft.com/en-us/windows/win32/power/power-setting-guids) and expose the Data member to Event Viewer. To ensure that this functions correctly as a service, the Windows Forms application loop (`Application.Run()`) is spawned inside a separate thread.
 
 ```
-Windows 7, Windows Server 2008 R2, Windows Vista and Windows Server 2008: This notification is available starting with Windows 8 and Windows Server 2012.
+Windows 7, Windows Server 2008 R2, Windows Vista and Windows Server 2008: This notification
+is available starting with Windows 8 and Windows Server 2012.
 
 The Data member is a DWORD with a value from the MONITOR_DISPLAY_STATE enumeration:
 
