@@ -7,7 +7,6 @@
     <ProjectGuid>{DAA659E2-12BB-44A0-A4CE-581ECB3B9B78}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>ScreenStateService</RootNamespace>
-    <AssemblyName>ScreenStateService</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -61,4 +60,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="GenerateInstallerProps" BeforeTargets="BeforeBuild">
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)GenerateInstallerProps.ps1&quot;" />
+  </Target>
 </Project>

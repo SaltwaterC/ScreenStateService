@@ -1,0 +1,24 @@
+﻿<Project Sdk="WixToolset.Sdk/6.0.1">
+  <Import Project="GeneratedVariables.props" Condition="Exists('GeneratedVariables.props')" />
+  <PropertyGroup>
+    <OutputName>$(RootNamespace)-$(Platform)-$(ProductVersion)</OutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>..\bin\x64\Release\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutputPath>..\bin\x64\Debug\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ScreenStateService.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="6.0.1" />
+  </ItemGroup>
+  <Target Name="GenerateWiXVariables" BeforeTargets="BeforeBuild">
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)GenerateWiXVariables.ps1&quot;" />
+  </Target>
+  <Target Name="Cleanup" AfterTargets="AfterBuild">
+    <Exec Command="del GeneratedVariables.*" />
+  </Target>
+</Project>

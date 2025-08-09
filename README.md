@@ -29,4 +29,4 @@ The Event IDs that you are interested in are basically MONITOR_DISPLAY_STATE + 1
 
 ## Install
 
-TODO
+Download release and install e.g. ScreenStateService-x64-1.0.0.msi

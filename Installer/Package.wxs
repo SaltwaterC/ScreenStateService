@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <?include "GeneratedVariables.wxi" ?>
+
+  <Package
+    Name="ScreenStateService"
+    Version="$(var.ProductVersion)"
+    Manufacturer="$(var.Manufacturer)"
+    UpgradeCode="$(var.UpgradeCode)"
+    Language="1033"
+    InstallerVersion="500"
+    Compressed="yes"
+    Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <MediaTemplate />
+
+    <Feature Id="ProductFeature" Title="ScreenStateService" Level="1">
+      <ComponentRef Id="ServiceExe" />
+      <ComponentRef Id="InstallerHelperExe" />
+    </Feature>
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="ScreenStateService" />
+    </StandardDirectory>
+
+  </Package>
+
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="ServiceExe" Guid="$(var.ComponentGuidService)">
+        <File Source="$(var.UpstreamProjectDir)\bin\Release\ScreenStateService.exe" KeyPath="yes" />
+        <ServiceInstall
+          Id="ServiceInstaller"
+          Type="ownProcess"
+          Name="ScreenStateService"
+          DisplayName="ScreenStateService"
+          Description="Monitors screen state and logs events."
+          Start="auto"
+          Account="LocalSystem"
+          ErrorControl="normal"
+          Vital="yes" />
+        <ServiceControl
+          Id="ServiceControl"
+          Name="ScreenStateService"
+          Start="install"
+          Stop="both"
+          Remove="uninstall"
+          Wait="yes" />
+      </Component>
+
+      <Component Id="InstallerHelperExe" Guid="$(var.ComponentGuidHelper)">
+        <File Source="$(var.UpstreamProjectDir)\bin\Release\InstallerHelper.exe" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <Fragment>
+    <UI>
+      <UIRef Id="WixUI_Minimal" />
+    </UI>
+  </Fragment>
+
+</Wix>
