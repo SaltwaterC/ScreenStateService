@@ -30,3 +30,13 @@ The Event IDs that you are interested in are basically MONITOR_DISPLAY_STATE + 1
 ## Install
 
 Download release and install e.g. ScreenStateService-x64-1.0.0.msi
+
+## Building
+
+To build everything from source, including installer:
+
+```powershell
+dotnet tool install --global wix
+cd Installer
+dotnet restore
+```

@@ -19,6 +19,9 @@
     <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)GenerateWiXVariables.ps1&quot;" />
   </Target>
   <Target Name="Cleanup" AfterTargets="AfterBuild">
-    <Exec Command="del GeneratedVariables.*" />
+  <Delete Files="
+      $(ProjectDir)GeneratedVariables.props;
+      $(ProjectDir)GeneratedVariables.wxi
+    " />
   </Target>
 </Project>
