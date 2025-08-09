@@ -26,11 +26,6 @@ if ($content -match 'AssemblyCompany\("([^"]+)"\)') {
     exit 1
 }
 
-# Constants (stable GUIDs)
-$upgradeCode = "e3b0c442-98fc-1c14-9afb-c4c929e7d7a1"
-$componentGuidService = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-$componentGuidHelper = "a74a41eb-53e4-4fcb-9f5f-5f3c21d2c4d1"
-
 # Path to generated WiX include file
 $outputPath = "GeneratedVariables.wxi"
 
@@ -39,9 +34,6 @@ $content = @"
 <Include>
   <?define ProductVersion="$version" ?>
   <?define Manufacturer="$company" ?>
-  <?define UpgradeCode="$upgradeCode" ?>
-  <?define ComponentGuidService="$componentGuidService" ?>
-  <?define ComponentGuidHelper="$componentGuidHelper" ?>
   <?define UpstreamProjectDir="$($projectDir.ToString().Replace('\','\\'))" ?>
 </Include>
 "@

@@ -8,30 +8,33 @@
     Name="ScreenStateService"
     Version="$(var.ProductVersion)"
     Manufacturer="$(var.Manufacturer)"
-    UpgradeCode="$(var.UpgradeCode)"
+    UpgradeCode="e3b0c442-98fc-1c14-9afb-c4c929e7d7a1"
     Language="1033"
     InstallerVersion="500"
     Compressed="yes"
     Scope="perMachine">
 
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
-    <MediaTemplate />
 
     <Feature Id="ProductFeature" Title="ScreenStateService" Level="1">
       <ComponentRef Id="ServiceExe" />
       <ComponentRef Id="InstallerHelperExe" />
     </Feature>
 
-    <StandardDirectory Id="ProgramFiles64Folder">
+    <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="ScreenStateService" />
     </StandardDirectory>
 
+    <ui:WixUI Id="WixUI_Mondo" />
+    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
   </Package>
 
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
-      <Component Id="ServiceExe" Guid="$(var.ComponentGuidService)">
-        <File Source="$(var.UpstreamProjectDir)\bin\Release\ScreenStateService.exe" KeyPath="yes" />
+      <Component Id="ServiceExe" Guid="f47ac10b-58cc-4372-a567-0e02b2c3d479">
+        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\ScreenStateService.exe" KeyPath="yes" />
         <ServiceInstall
           Id="ServiceInstaller"
           Type="ownProcess"
@@ -51,16 +54,9 @@
           Wait="yes" />
       </Component>
 
-      <Component Id="InstallerHelperExe" Guid="$(var.ComponentGuidHelper)">
-        <File Source="$(var.UpstreamProjectDir)\bin\Release\InstallerHelper.exe" KeyPath="yes" />
+      <Component Id="InstallerHelperExe" Guid="a74a41eb-53e4-4fcb-9f5f-5f3c21d2c4d1">
+        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\InstallerHelper.exe" KeyPath="yes" />
       </Component>
     </DirectoryRef>
   </Fragment>
-
-  <Fragment>
-    <UI>
-      <UIRef Id="WixUI_Minimal" />
-    </UI>
-  </Fragment>
-
 </Wix>

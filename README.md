@@ -36,7 +36,11 @@ Download release and install e.g. ScreenStateService-x64-1.0.0.msi
 To build everything from source, including installer:
 
 ```powershell
-dotnet tool install --global wix
+dotnet tool install --global wix --version 6.0.1
 cd Installer
 dotnet restore
 ```
+
+WiX is integrated with HeatWave and the global wix tool per [this document](https://learn.microsoft.com/en-us/dotnet/core/extensions/windows-service-with-installer?tabs=wix).
+
+Build entire solution after resolving these dependencies.
