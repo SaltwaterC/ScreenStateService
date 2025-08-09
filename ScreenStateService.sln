@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36401.2 d17.14
+VisualStudioVersion = 17.14.36401.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreenStateService", "ScreenStateService.csproj", "{DAA659E2-12BB-44A0-A4CE-581ECB3B9B78}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallerHelper", "InstallerHelper\InstallerHelper.csproj", "{B9120083-AA2A-458F-8532-8596B5D70062}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{DAA659E2-12BB-44A0-A4CE-581ECB3B9B78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DAA659E2-12BB-44A0-A4CE-581ECB3B9B78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DAA659E2-12BB-44A0-A4CE-581ECB3B9B78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9120083-AA2A-458F-8532-8596B5D70062}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9120083-AA2A-458F-8532-8596B5D70062}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9120083-AA2A-458F-8532-8596B5D70062}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9120083-AA2A-458F-8532-8596B5D70062}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
