@@ -107,9 +107,26 @@ class Program
             FileName = "sc.exe",
             Arguments = arguments,
             UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
             CreateNoWindow = true
         };
-        var proc = Process.Start(psi);
-        proc.WaitForExit();
+
+        using (var proc = Process.Start(psi))
+        {
+            string stdout = proc.StandardOutput.ReadToEnd();
+            string stderr = proc.StandardError.ReadToEnd();
+            proc.WaitForExit();
+
+            if (proc.ExitCode != 0)
+            {
+                Console.WriteLine($"sc.exe failed with exit code {proc.ExitCode}");
+                Console.WriteLine("Standard Output:");
+                Console.WriteLine(stdout);
+                Console.WriteLine("Standard Error:");
+                Console.WriteLine(stderr);
+                throw new Exception($"sc.exe command failed: {arguments}");
+            }
+        }
     }
 }
