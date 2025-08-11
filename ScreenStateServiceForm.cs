@@ -65,7 +65,7 @@ namespace ScreenStateService
                             text = "Unknown screen state.";
                             break;
                     }
-                    try { EventLog.WriteEntry(serviceName, text, EventLogEntryType.Information, id); } catch { }
+                    EventLog.WriteEntry(serviceName, text, EventLogEntryType.Information, id);
                 }
             }
             base.WndProc(ref msg);
