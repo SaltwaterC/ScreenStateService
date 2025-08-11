@@ -1,0 +1,23 @@
+<Project>
+  <PropertyGroup>
+    <!-- Let SDK include items automatically -->
+    <EnableDefaultItems>true</EnableDefaultItems>
+
+    <!-- Make sure globs NEVER pick up generated files -->
+    <DefaultItemExcludes>
+      $(DefaultItemExcludes);
+      **\bin\**;
+      **\obj\**
+    </DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Extra belt-and-braces: remove any stragglers if some Include slipped in -->
+    <Compile Remove="**\bin\**\*.cs" />
+    <Compile Remove="**\obj\**\*.cs" />
+    <None Remove="**\bin\**\*" />
+    <None Remove="**\obj\**\*" />
+    <EmbeddedResource Remove="**\bin\**\*" />
+    <EmbeddedResource Remove="**\obj\**\*" />
+  </ItemGroup>
+</Project>

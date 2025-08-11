@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿// ScreenStateService.cs
+using System.Diagnostics;
 using System.ServiceProcess;
 using System.Threading;
 using System.Windows.Forms;
@@ -7,8 +8,8 @@ namespace ScreenStateService
 {
     public partial class ScreenStateService : ServiceBase
     {
-        private ScreenStateServiceForm ListenerForm;
-        private Thread MessageLoopThread;
+        private ScreenStateServiceForm listenerForm;
+        private Thread uiThread;
 
         public ScreenStateService()
         {
@@ -18,31 +19,39 @@ namespace ScreenStateService
 
         protected override void OnStart(string[] args)
         {
-            if (!EventLog.SourceExists(ServiceName))
-            {
-                EventLog.CreateEventSource(ServiceName, "Application");
-            }
-            EventLog.WriteEntry(ServiceName, "Service starting.", EventLogEntryType.Information);
+            // Event source is created by MSI/helper
+            try { EventLog.WriteEntry(ServiceName, "Service starting.", EventLogEntryType.Information); } catch { }
 
-            MessageLoopThread = new Thread(() =>
+            uiThread = new Thread(() =>
             {
-                ListenerForm = new ScreenStateServiceForm(ServiceName);
+                listenerForm = new ScreenStateServiceForm(ServiceName);
+                Application.Run(listenerForm);
             });
-            MessageLoopThread.SetApartmentState(ApartmentState.STA);
-            MessageLoopThread.IsBackground = true;
-            MessageLoopThread.Start();
+            uiThread.SetApartmentState(ApartmentState.STA);
+            uiThread.IsBackground = true;
+            uiThread.Start();
         }
 
         protected override void OnStop()
         {
-            EventLog.WriteEntry(ServiceName, "Service stopping.", EventLogEntryType.Information);
+            try { EventLog.WriteEntry(ServiceName, "Service stopping.", EventLogEntryType.Information); } catch { }
 
-            ListenerForm?.Invoke((MethodInvoker)(() =>
+            var form = listenerForm;
+            if (form != null && !form.IsDisposed)
+            {
+                form.BeginInvoke(new MethodInvoker(() =>
                 {
-                    ListenerForm.Close();
+                    try { form.Close(); } catch { }
+                    try { Application.ExitThread(); } catch { }
                 }));
+            }
 
-            MessageLoopThread?.Join(5000);
+            if (uiThread != null)
+            {
+                uiThread.Join(5000);
+                uiThread = null;
+            }
+            listenerForm = null;
         }
     }
 }

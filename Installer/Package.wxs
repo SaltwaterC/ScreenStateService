@@ -34,7 +34,7 @@
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
       <Component Id="ServiceExe" Guid="f47ac10b-58cc-4372-a567-0e02b2c3d479">
-        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\ScreenStateService.exe" KeyPath="yes" />
+        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\ScreenStateService.exe" KeyPath="yes" />
         <ServiceInstall
           Id="ServiceInstaller"
           Type="ownProcess"
@@ -42,7 +42,7 @@
           DisplayName="ScreenStateService"
           Description="Monitors screen state and logs events."
           Start="auto"
-          Account="LocalSystem"
+          Account="LocalService"
           ErrorControl="normal"
           Vital="yes" />
         <ServiceControl
@@ -55,7 +55,7 @@
       </Component>
 
       <Component Id="InstallerHelperExe" Guid="a74a41eb-53e4-4fcb-9f5f-5f3c21d2c4d1">
-        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\InstallerHelper.exe" KeyPath="yes" />
+        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\InstallerHelper.exe" KeyPath="yes" />
       </Component>
     </DirectoryRef>
   </Fragment>

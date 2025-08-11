@@ -1,65 +1,76 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DAA659E2-12BB-44A0-A4CE-581ECB3B9B78}</ProjectGuid>
+    <!-- Target -->
+    <TargetFramework>net48</TargetFramework>
     <OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <!-- Names -->
+    <AssemblyName>ScreenStateService</AssemblyName>
     <RootNamespace>ScreenStateService</RootNamespace>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+
+    <!-- Assembly attributes (replacing AssemblyInfo.cs) -->
+    <AssemblyTitle>ScreenStateService</AssemblyTitle>
+    <Description>Windows service useful for detecting screen events (off/on/dimmed) and log them to Event Viewer</Description>
+    <Company>SaltwaterC</Company>
+    <Product>ScreenStateService</Product>
+    <Copyright>Copyright © 2025</Copyright>
+    <Trademark></Trademark>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+
+    <!-- COM / GUID -->
+    <GenerateComVisibleAttribute>false</GenerateComVisibleAttribute>
+    <Guid>daa659e2-12bb-44a0-a4ce-581ecb3b9b78</Guid>
+
+    <!-- Usual desktop bits -->
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <PropertyGroup>
-    <StartupObject />
+    <EnableDefaultItems>true</EnableDefaultItems>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
+
+  <!-- Windows Service API -->
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ScreenStateService.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ScreenStateServiceForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-  </ItemGroup>
+
+  <!-- Keep App.config -->
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <ItemGroup>
+    <!-- Make absolutely sure we don't compile generated files -->
+    <Compile Remove="obj\**\*.cs" />
+    <Compile Remove="bin\**\*.cs" />
+    <!-- Optional: keep the items list tidy -->
+    <None Remove="obj\**\*" />
+    <None Remove="bin\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Stop SDK globs from pulling in the helper's sources -->
+    <Compile Remove="InstallerHelper\**\*.cs" />
+    <None Remove="InstallerHelper\**\*" />
+    <EmbeddedResource Remove="InstallerHelper\**\*" />
+  </ItemGroup>
+
+  <!-- Optional: belt-and-braces; keeps default items but excludes that folder -->
+  <PropertyGroup>
+    <EnableDefaultItems>true</EnableDefaultItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes);InstallerHelper\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+
+  <!-- Your prebuild PowerShell -->
   <Target Name="GenerateInstallerProps" BeforeTargets="BeforeBuild">
     <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)GenerateInstallerProps.ps1&quot;" />
   </Target>
