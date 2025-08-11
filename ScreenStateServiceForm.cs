@@ -62,6 +62,7 @@ namespace ScreenStateService
                             text = "Screen dimmed.";
                             break;
                         default:
+                            id = 999; // Default case for unknown state
                             text = "Unknown screen state.";
                             break;
                     }
