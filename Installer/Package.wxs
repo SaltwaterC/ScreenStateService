@@ -1,62 +1,122 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
-     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
 
-  <?include "GeneratedVariables.wxi" ?>
+	<?include "GeneratedVariables.wxi" ?>
 
-  <Package
-    Name="ScreenStateService"
-    Version="$(var.ProductVersion)"
-    Manufacturer="$(var.Manufacturer)"
-    UpgradeCode="e3b0c442-98fc-1c14-9afb-c4c929e7d7a1"
-    Language="1033"
-    InstallerVersion="500"
-    Compressed="yes"
-    Scope="perMachine">
+	<Package
+	  Name="ScreenStateService"
+	  Version="$(var.ProductVersion)"
+	  Manufacturer="$(var.Manufacturer)"
+	  UpgradeCode="e3b0c442-98fc-1c14-9afb-c4c929e7d7a1"
+	  Language="1033"
+	  InstallerVersion="500"
+	  Compressed="yes"
+	  Scope="perMachine">
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+		<MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
 
-    <Feature Id="ProductFeature" Title="ScreenStateService" Level="1">
-      <ComponentRef Id="ServiceExe" />
-      <ComponentRef Id="InstallerHelperExe" />
-    </Feature>
+		<Feature Id="ProductFeature" Title="ScreenStateService" Level="1">
+			<ComponentRef Id="InstallFolderPerms" />
+			<ComponentRef Id="ServiceExe" />
+			<ComponentRef Id="InstallerHelperExe" />
+		</Feature>
 
-    <StandardDirectory Id="ProgramFiles6432Folder">
-      <Directory Id="INSTALLFOLDER" Name="ScreenStateService" />
-    </StandardDirectory>
+		<ui:WixUI Id="WixUI_Mondo" />
+		<WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
 
-    <ui:WixUI Id="WixUI_Mondo" />
-    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+		<Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+	</Package>
 
-    <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
-  </Package>
+	<!-- Install under Program Files (x86) like your original authoring -->
+	<Fragment>
+		<StandardDirectory Id="ProgramFiles6432Folder">
+			<Directory Id="INSTALLFOLDER" Name="ScreenStateService" />
+		</StandardDirectory>
+	</Fragment>
 
-  <Fragment>
-    <DirectoryRef Id="INSTALLFOLDER">
-      <Component Id="ServiceExe" Guid="f47ac10b-58cc-4372-a567-0e02b2c3d479">
-        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\ScreenStateService.exe" KeyPath="yes" />
-        <ServiceInstall
-          Id="ServiceInstaller"
-          Type="ownProcess"
-          Name="ScreenStateService"
-          DisplayName="ScreenStateService"
-          Description="Monitors screen state and logs events."
-          Start="auto"
-          Account="LocalService"
-          ErrorControl="normal"
-          Vital="yes" />
-        <ServiceControl
-          Id="ServiceControl"
-          Name="ScreenStateService"
-          Start="install"
-          Stop="both"
-          Remove="uninstall"
-          Wait="yes" />
-      </Component>
+	<Fragment>
+		<DirectoryRef Id="INSTALLFOLDER">
 
-      <Component Id="InstallerHelperExe" Guid="a74a41eb-53e4-4fcb-9f5f-5f3c21d2c4d1">
-        <File Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\InstallerHelper.exe" KeyPath="yes" />
-      </Component>
-    </DirectoryRef>
-  </Fragment>
+			<!-- Ensure folder exists and grant LocalService RX on the folder -->
+			<Component Id="InstallFolderPerms" Guid="9c1c7a2e-9f9a-4c6c-9d71-2b61f3d3d111">
+				<CreateFolder>
+					<util:PermissionEx
+					  User="NT AUTHORITY\LocalService"
+					  GenericRead="yes"
+					  GenericExecute="yes" />
+				</CreateFolder>
+			</Component>
+
+			<!-- Main service executable -->
+			<Component Id="ServiceExe" Guid="f47ac10b-58cc-4372-a567-0e02b2c3d479">
+				<File Id="SvcExe"
+					  Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\ScreenStateService.exe"
+					  KeyPath="yes">
+					<!-- Explicit RX on the file in case inheritance is blocked -->
+					<util:PermissionEx
+					  User="NT AUTHORITY\LocalService"
+					  GenericRead="yes"
+					  GenericExecute="yes" />
+				</File>
+
+				<!-- Explicit Event Source registry (so Event Viewer resolves messages) -->
+				<RegistryKey Root="HKLM"
+							 Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\ScreenStateService">
+					<RegistryValue Name="EventMessageFile"
+								   Type="string"
+								   Value="[INSTALLFOLDER]ScreenStateService.exe"/>
+					<RegistryValue Name="TypesSupported"
+								   Type="integer"
+								   Value="7"/>
+				</RegistryKey>
+
+				<!-- Windows service -->
+				<ServiceInstall
+				  Id="ServiceInstaller"
+				  Type="ownProcess"
+				  Name="ScreenStateService"
+				  DisplayName="ScreenStateService"
+				  Description="Monitors screen state and logs events."
+				  Start="auto"
+				  Account="NT AUTHORITY\LocalService"
+				  ErrorControl="normal"
+				  Vital="yes">
+
+					<!-- Core service config (WiX built-in) -->
+					<ServiceConfig
+					  DelayedAutoStart="yes"
+					  ServiceSid="1"
+					  OnInstall="yes"
+					  OnReinstall="yes"
+					  OnUninstall="no" />
+
+					<!-- Failure actions -->
+					<util:ServiceConfig
+					  FirstFailureActionType="restart"
+					  SecondFailureActionType="restart"
+					  ThirdFailureActionType="none"
+					  RestartServiceDelayInSeconds="60"
+					  ResetPeriodInDays="1" />
+				</ServiceInstall>
+
+				<ServiceControl
+				  Id="ServiceControl"
+				  Name="ScreenStateService"
+				  Start="install"
+				  Stop="both"
+				  Remove="both"
+				  Wait="yes" />
+			</Component>
+
+			<!-- Installer helper utility -->
+			<Component Id="InstallerHelperExe" Guid="a74a41eb-53e4-4fcb-9f5f-5f3c21d2c4d1">
+				<File
+				  Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\InstallerHelper.exe"
+				  KeyPath="yes" />
+			</Component>
+
+		</DirectoryRef>
+	</Fragment>
 </Wix>

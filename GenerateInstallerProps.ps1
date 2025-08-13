@@ -1,21 +1,42 @@
-# GenerateInstallerProps.ps1 (PowerShell 5.1 compatible, verbose + robust)
+# GenerateInstallerProps.ps1  (PowerShell 5.1)
 param(
   [string]$Project = 'ScreenStateService.csproj',
-  [string]$Out = 'Installer\GeneratedVariables.props'
+  [Parameter(Mandatory = $false)]
+  [string]$Out = ''
 )
+
+if(!$Out) {
+    throw "Please pass -Out."
+}
 
 $ErrorActionPreference = 'Stop'
 
 # Resolve script directory
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Path $MyInvocation.MyCommand.Path -Parent }
 
-# Resolve paths
+# Resolve csproj
 if (-not (Test-Path -LiteralPath $Project)) {
   $projPath = Join-Path $scriptDir $Project
 } else {
   $projPath = (Resolve-Path -LiteralPath $Project).Path
 }
-$outPath = if ([System.IO.Path]::IsPathRooted($Out)) { $Out } else { Join-Path $scriptDir $Out }
+
+# ---- NEW: validate and resolve $Out ----
+if ([string]::IsNullOrWhiteSpace($Out)) {
+  throw "Please pass -Out or keep the default."
+}
+
+$outPath = if ([System.IO.Path]::IsPathRooted($Out)) {
+  $Out
+} else {
+  Join-Path -Path $scriptDir -ChildPath $Out
+}
+
+# Ensure output directory exists
+$outDir = [System.IO.Path]::GetDirectoryName($outPath)
+if ($outDir -and -not (Test-Path -LiteralPath $outDir)) {
+  New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+}
 
 Write-Host "Reading project: $projPath"
 
@@ -47,7 +68,6 @@ function To-MsiVersion([string]$v) {
   ($parts -join '.')
 }
 
-# Collect raw values (log each)
 $rootNamespaceRaw = Get-MsBuildProperty $csproj 'RootNamespace'
 $assemblyNameRaw  = Get-MsBuildProperty $csproj 'AssemblyName'
 $asmVerRaw        = Get-MsBuildProperty $csproj 'AssemblyVersion'
@@ -63,14 +83,9 @@ Write-Host "  FileVersion     = '$fileVerRaw'"
 Write-Host "  Version         = '$verRaw'"
 Write-Host "  VersionPrefix   = '$verPrefixRaw'"
 
-$rootNamespace = First-NonEmpty @($rootNamespaceRaw, $assemblyNameRaw, 'ScreenStateService')
-$rawVersion    = First-NonEmpty @($asmVerRaw, $fileVerRaw, $verRaw, $verPrefixRaw, '1.0.0')
+$rootNamespace  = First-NonEmpty @($rootNamespaceRaw, $assemblyNameRaw, 'ScreenStateService')
+$rawVersion     = First-NonEmpty @($asmVerRaw, $fileVerRaw, $verRaw, $verPrefixRaw, '1.0.0')
 $productVersion = To-MsiVersion $rawVersion
-
-$outDir = [System.IO.Path]::GetDirectoryName($outPath)
-if ($outDir -and -not (Test-Path -LiteralPath $outDir)) {
-    New-Item -ItemType Directory -Path $outDir -Force | Out-Null
-}
 
 # Write props
 $content = @"
@@ -83,7 +98,6 @@ $content = @"
 "@
 
 Set-Content -LiteralPath $outPath -Value $content -Encoding UTF8
-
 Write-Host "Generated properties to $outPath"
 Write-Host "  RootNamespace  = $rootNamespace"
 Write-Host "  ProductVersion = $productVersion   (derived from '$rawVersion')"

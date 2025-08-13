@@ -1,5 +1,4 @@
-﻿// ScreenStateServiceForm.cs
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -26,47 +25,51 @@ namespace ScreenStateService
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr RegisterPowerSettingNotification(
             IntPtr hRecipient,
-            in Guid PowerSettingGuid, // OK in C# 7.3
+            Guid PowerSettingGuid,
             int Flags);
 
         public ScreenStateServiceForm(string serviceName)
         {
             this.serviceName = serviceName;
-            // No Application.Run() here; the service thread does that.
         }
 
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            RegisterPowerSettingNotification(this.Handle, in GUID_CONSOLE_DISPLAY_STATE, DEVICE_NOTIFY_WINDOW_HANDLE);
+            RegisterPowerSettingNotification(this.Handle, GUID_CONSOLE_DISPLAY_STATE, DEVICE_NOTIFY_WINDOW_HANDLE);
+        }
+
+        /// <summary>
+        /// Maps console display state byte to the full EventInstance ID from the message table.
+        /// Informational severity messages have the high bit set (0x40000000).
+        /// </summary>
+        private static long ToInstanceId(byte state)
+        {
+            switch (state)
+            {
+                case 0: return 0x400003E8; // Screen off (1000 | 0x4000_0000)
+                case 1: return 0x400003E9; // Screen on  (1001 | 0x4000_0000)
+                case 2: return 0x400003EA; // Screen dimmed (1002 | 0x4000_0000)
+                default: return 0x400003E7; // Unknown (999 | 0x4000_0000)
+            }
+        }
+
+        private void LogScreenEvent(byte state)
+        {
+            long instanceId = ToInstanceId(state);
+            var evt = new EventInstance(instanceId, 0, EventLogEntryType.Information);
+            EventLog.WriteEvent(serviceName, evt);
         }
 
         protected override void WndProc(ref Message msg)
         {
             if (msg.Msg == WM_POWERBROADCAST && msg.WParam.ToInt32() == PBT_POWERSETTINGCHANGE)
             {
-                POWERBROADCAST_SETTING pbs = Marshal.PtrToStructure<POWERBROADCAST_SETTING>(msg.LParam);
+                POWERBROADCAST_SETTING pbs = (POWERBROADCAST_SETTING)Marshal.PtrToStructure(msg.LParam, typeof(POWERBROADCAST_SETTING));
                 if (pbs.PowerSetting == GUID_CONSOLE_DISPLAY_STATE)
                 {
-                    int id = pbs.Data + 1000;
-                    string text;
-                    switch (pbs.Data)
-                    {
-                        case 0:
-                            text = "Screen turned off.";
-                            break;
-                        case 1:
-                            text = "Screen turned on.";
-                            break;
-                        case 2:
-                            text = "Screen dimmed.";
-                            break;
-                        default:
-                            id = 999; // Default case for unknown state
-                            text = "Unknown screen state.";
-                            break;
-                    }
-                    EventLog.WriteEntry(serviceName, text, EventLogEntryType.Information, id);
+                    // Log using message table IDs (correct Event Viewer text)
+                    LogScreenEvent(pbs.Data);
                 }
             }
             base.WndProc(ref msg);

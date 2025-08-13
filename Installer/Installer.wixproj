@@ -9,19 +9,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutputPath>..\bin\x64\Debug\</OutputPath>
   </PropertyGroup>
+  <PropertyGroup>
+	<!-- util:ServiceConfig is not a 1:1 replacement for ServiceConfig -->
+    <NoWarn>WIX1149</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ScreenStateService.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="WixToolset.UI.wixext" Version="6.0.1" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Util.wixext" Version="6.0.1" />
+  </ItemGroup>
   <Target Name="GenerateWiXVariables" BeforeTargets="BeforeBuild">
     <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)GenerateWiXVariables.ps1&quot;" />
   </Target>
-  <Target Name="Cleanup" AfterTargets="AfterBuild">
-  <Delete Files="
-      $(ProjectDir)GeneratedVariables.props;
-      $(ProjectDir)GeneratedVariables.wxi
-    " />
-  </Target>
+	<!-- Replace your Cleanup target with this (or just remove it completely) -->
+	<Target Name="Cleanup" AfterTargets="Clean">
+		<Delete Files="$(ProjectDir)GeneratedVariables.props" />
+		<Delete Files="$(ProjectDir)GeneratedVariables.wxi" />
+	</Target>
 </Project>

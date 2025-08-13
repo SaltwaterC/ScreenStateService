@@ -1,77 +1,164 @@
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Target -->
     <TargetFramework>net48</TargetFramework>
     <OutputType>WinExe</OutputType>
-    <UseWindowsForms>true</UseWindowsForms>
 
-    <!-- Names -->
     <AssemblyName>ScreenStateService</AssemblyName>
     <RootNamespace>ScreenStateService</RootNamespace>
 
-    <!-- Assembly attributes (replacing AssemblyInfo.cs) -->
-    <AssemblyTitle>ScreenStateService</AssemblyTitle>
-    <Description>Windows service useful for detecting screen events (off/on/dimmed) and log them to Event Viewer</Description>
+    <!-- Versions -->
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <AssemblyInformationalVersion>1.0.1</AssemblyInformationalVersion>
+
     <Company>SaltwaterC</Company>
     <Product>ScreenStateService</Product>
     <Copyright>Copyright © 2025</Copyright>
-    <Trademark></Trademark>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
 
-    <!-- COM / GUID -->
-    <GenerateComVisibleAttribute>false</GenerateComVisibleAttribute>
-    <Guid>daa659e2-12bb-44a0-a4ce-581ecb3b9b78</Guid>
-
-    <!-- Usual desktop bits -->
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+
+    <!-- Entry point -->
+    <StartupObject>ScreenStateService.Program</StartupObject>
+
+    <!-- Message assets -->
+    <MsgRoot>$(MSBuildProjectDirectory)\messages</MsgRoot>
+    <!-- ABSOLUTE output dir for message artifacts -->
+    <MsgInt>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\mc</MsgInt>
+
+    <!-- Default resource choice; finalized in PrepareEventMessages -->
+    <GenerateWin32Manifest>false</GenerateWin32Manifest>
+    <Win32Resource>$(MsgInt)\messages.res</Win32Resource>
+
+    <!-- Optional manual override:
+         msbuild /p:WinKitBin="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64" -->
+    <WinKitBin Condition="'$(WinKitBin)'!=''">$(WinKitBin)</WinKitBin>
+
+    <!-- Arch for SDK tools -->
+    <PreferredSdkArch>x64</PreferredSdkArch>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <EnableDefaultItems>true</EnableDefaultItems>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-  </PropertyGroup>
-
-  <!-- Windows Service API -->
+  <!-- Make assets visible in VS -->
   <ItemGroup>
-    <Reference Include="System.ServiceProcess" />
-  </ItemGroup>
-
-  <!-- Keep App.config -->
-  <ItemGroup>
+    <None Include="messages\messages.mc" />
+    <None Include="messages\messages.res" Condition="Exists('$(MSBuildProjectDirectory)\messages\messages.res')" />
     <None Include="App.config" />
   </ItemGroup>
 
+  <!-- If a prebuilt .res exists, use it directly and skip copy -->
+  <PropertyGroup>
+    <PrebuiltRes>$(MSBuildProjectDirectory)\messages\messages.res</PrebuiltRes>
+    <Win32Resource Condition="Exists('$(PrebuiltRes)')">$(PrebuiltRes)</Win32Resource>
+    <GenerateWin32Manifest Condition="Exists('$(PrebuiltRes)')">false</GenerateWin32Manifest>
+  </PropertyGroup>
+
+  <!-- Framework assembly references -->
   <ItemGroup>
-    <!-- Make absolutely sure we don't compile generated files -->
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <!-- Belt & braces: never compile from sibling projects; avoid accidental extra Main() -->
+  <ItemGroup>
+    <Compile Remove="..\InstallerHelper\**\*.cs" />
+    <Compile Remove="..\Installer\**\*.cs" />
+    <None    Remove="..\InstallerHelper\**\*" />
+    <None    Remove="..\Installer\**\*" />
+  </ItemGroup>
+
+  <!-- Be strict: never compile anything from bin/obj -->
+  <ItemGroup>
     <Compile Remove="obj\**\*.cs" />
     <Compile Remove="bin\**\*.cs" />
-    <!-- Optional: keep the items list tidy -->
     <None Remove="obj\**\*" />
     <None Remove="bin\**\*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Stop SDK globs from pulling in the helper's sources -->
-    <Compile Remove="InstallerHelper\**\*.cs" />
-    <None Remove="InstallerHelper\**\*" />
-    <EmbeddedResource Remove="InstallerHelper\**\*" />
-  </ItemGroup>
+  <!-- ================= Prepare & build event message resource ================= -->
+  <Target Name="PrepareEventMessages" BeforeTargets="CoreCompile">
+    <!-- Decide mode:
+         A) Prebuilt exists  -> copy & embed
+         B) Build from .mc   -> discover SDK and run mc/rc
+         C) Fallback (no SDK)-> build without message table (still succeed) -->
+    <PropertyGroup>
+      <PrebuiltRes>$(MsgRoot)\messages.res</PrebuiltRes>
+      <UsePrebuilt Condition="Exists('$(PrebuiltRes)')">true</UsePrebuilt>
+    </PropertyGroup>
 
-  <!-- Optional: belt-and-braces; keeps default items but excludes that folder -->
-  <PropertyGroup>
-    <EnableDefaultItems>true</EnableDefaultItems>
-    <DefaultItemExcludes>$(DefaultItemExcludes);InstallerHelper\**</DefaultItemExcludes>
-  </PropertyGroup>
+    <!-- A) Use prebuilt -->
+    <Message Text="Event messages: using prebuilt resource at $(PrebuiltRes)" Importance="high" Condition="'$(UsePrebuilt)'=='true'" />
+    <MakeDir Directories="$(MsgInt)" Condition="'$(UsePrebuilt)'=='true'" />
+    <Copy SourceFiles="$(PrebuiltRes)" DestinationFiles="$(MsgInt)\messages.res" Condition="'$(UsePrebuilt)'=='true'" />
+    <PropertyGroup Condition="'$(UsePrebuilt)'=='true'">
+      <Win32Resource>$(MsgInt)\messages.res</Win32Resource>
+      <GenerateWin32Manifest>false</GenerateWin32Manifest>
+    </PropertyGroup>
 
+    <!-- B) Build from .mc (only if no prebuilt) -->
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true'">
+      <!-- Try a short list of common SDK bins if WinKitBin isn't set -->
+      <_Sdk1>$(ProgramFiles(x86))\Windows Kits\10\bin\10.0.26100.0\$(PreferredSdkArch)</_Sdk1>
+      <_Sdk2>$(ProgramFiles(x86))\Windows Kits\10\bin\10.0.22621.0\$(PreferredSdkArch)</_Sdk2>
+      <_Sdk3>$(ProgramFiles(x86))\Windows Kits\10\bin\10.0.19041.0\$(PreferredSdkArch)</_Sdk3>
+      <_Sdk4>$(ProgramFiles(x86))\Windows Kits\10\bin\$(PreferredSdkArch)</_Sdk4>
+      <_Sdk5>$(ProgramFiles)\Windows Kits\10\bin\$(PreferredSdkArch)</_Sdk5>
+    </PropertyGroup>
 
-  <!-- Your prebuild PowerShell -->
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and '$(WinKitBin)'=='' and Exists('$(_Sdk1)')">
+      <WinKitBin>$(_Sdk1)</WinKitBin>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and '$(WinKitBin)'=='' and Exists('$(_Sdk2)')">
+      <WinKitBin>$(_Sdk2)</WinKitBin>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and '$(WinKitBin)'=='' and Exists('$(_Sdk3)')">
+      <WinKitBin>$(_Sdk3)</WinKitBin>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and '$(WinKitBin)'=='' and Exists('$(_Sdk4)')">
+      <WinKitBin>$(_Sdk4)</WinKitBin>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and '$(WinKitBin)'=='' and Exists('$(_Sdk5)')">
+      <WinKitBin>$(_Sdk5)</WinKitBin>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true'">
+      <McExe>$(WinKitBin)\mc.exe</McExe>
+      <RcExe>$(WinKitBin)\rc.exe</RcExe>
+    </PropertyGroup>
+
+    <!-- If we have SDK tools, compile messages.mc -->
+    <Message Text="Event messages: building from .mc using SDK at $(WinKitBin)" Importance="high"
+             Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')" />
+    <MakeDir Directories="$(MsgInt)" Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')" />
+    <Exec Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')"
+          Command="&quot;$(McExe)&quot; -u -r &quot;$(MsgInt)&quot; -h &quot;$(MsgInt)&quot; &quot;$(MsgRoot)\messages.mc&quot;" />
+    <Exec Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')"
+          Command="&quot;$(RcExe)&quot; /r /fo &quot;$(MsgInt)\messages.res&quot; &quot;$(MsgInt)\messages.rc&quot;" />
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')">
+      <Win32Resource>$(MsgInt)\messages.res</Win32Resource>
+      <GenerateWin32Manifest>false</GenerateWin32Manifest>
+    </PropertyGroup>
+
+    <!-- C) Fallback: no SDK and no prebuilt -> build without message table -->
+    <Message Text="Event messages: SDK not found and no prebuilt resource. Building WITHOUT message table. To restore clean text, either commit messages\messages.res or install Windows 10/11 SDK and rebuild."
+             Importance="high"
+             Condition="'$(UsePrebuilt)'!='true' and (!Exists('$(McExe)') or !Exists('$(RcExe)')) and !Exists('$(PrebuiltRes)')" />
+    <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and (!Exists('$(McExe)') or !Exists('$(RcExe)')) and !Exists('$(PrebuiltRes)')">
+      <Win32Resource></Win32Resource>
+      <GenerateWin32Manifest>true</GenerateWin32Manifest>
+    </PropertyGroup>
+  </Target>
+  <!-- ======================================================================== -->
+
+  <!-- Clean up the generated message artifacts and any stray relative 'mc' folder -->
+  <Target Name="CleanEventMessages" AfterTargets="Clean">
+    <RemoveDir Directories="$(MsgInt)" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\mc" />
+  </Target>
+
   <Target Name="GenerateInstallerProps" BeforeTargets="BeforeBuild">
-    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)GenerateInstallerProps.ps1&quot;" />
+    <Exec Command='powershell -NoProfile -ExecutionPolicy Bypass -File "GenerateInstallerProps.ps1" -Out "Installer\GeneratedVariables.props"' />
+	  <Exec Command='powershell -NoProfile -ExecutionPolicy Bypass -File "GenerateInstallerProps.ps1" -Out "InstallerHelper\GeneratedVariables.props"' />
   </Target>
 </Project>
