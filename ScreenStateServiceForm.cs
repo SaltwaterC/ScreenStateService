@@ -14,6 +14,8 @@ namespace ScreenStateService
         private const int PBT_POWERSETTINGCHANGE = 0x8013;
         private const int DEVICE_NOTIFY_WINDOW_HANDLE = 0x00000000;
 
+        private IntPtr notificationHandle;
+
         [StructLayout(LayoutKind.Sequential, Pack = 4)]
         private struct POWERBROADCAST_SETTING
         {
@@ -28,6 +30,10 @@ namespace ScreenStateService
             Guid PowerSettingGuid,
             int Flags);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool UnregisterPowerSettingNotification(IntPtr handle);
+
         public ScreenStateServiceForm(string serviceName)
         {
             this.serviceName = serviceName;
@@ -36,7 +42,18 @@ namespace ScreenStateService
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            RegisterPowerSettingNotification(this.Handle, GUID_CONSOLE_DISPLAY_STATE, DEVICE_NOTIFY_WINDOW_HANDLE);
+            notificationHandle = RegisterPowerSettingNotification(this.Handle, GUID_CONSOLE_DISPLAY_STATE, DEVICE_NOTIFY_WINDOW_HANDLE);
+        }
+
+        protected override void OnHandleDestroyed(EventArgs e)
+        {
+            if (notificationHandle != IntPtr.Zero)
+            {
+                try { UnregisterPowerSettingNotification(notificationHandle); }
+                catch { }
+                notificationHandle = IntPtr.Zero;
+            }
+            base.OnHandleDestroyed(e);
         }
 
         /// <summary>
