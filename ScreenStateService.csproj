@@ -51,6 +51,7 @@
     <PrebuiltRes>$(MSBuildProjectDirectory)\messages\messages.res</PrebuiltRes>
     <Win32Resource Condition="Exists('$(PrebuiltRes)')">$(PrebuiltRes)</Win32Resource>
     <GenerateWin32Manifest Condition="Exists('$(PrebuiltRes)')">false</GenerateWin32Manifest>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <!-- Framework assembly references -->
@@ -64,8 +65,8 @@
   <ItemGroup>
     <Compile Remove="..\InstallerHelper\**\*.cs" />
     <Compile Remove="..\Installer\**\*.cs" />
-    <None    Remove="..\InstallerHelper\**\*" />
-    <None    Remove="..\Installer\**\*" />
+    <None Remove="..\InstallerHelper\**\*" />
+    <None Remove="..\Installer\**\*" />
   </ItemGroup>
 
   <!-- Be strict: never compile anything from bin/obj -->
@@ -128,22 +129,17 @@
     </PropertyGroup>
 
     <!-- If we have SDK tools, compile messages.mc -->
-    <Message Text="Event messages: building from .mc using SDK at $(WinKitBin)" Importance="high"
-             Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')" />
+    <Message Text="Event messages: building from .mc using SDK at $(WinKitBin)" Importance="high" Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')" />
     <MakeDir Directories="$(MsgInt)" Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')" />
-    <Exec Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')"
-          Command="&quot;$(McExe)&quot; -u -r &quot;$(MsgInt)&quot; -h &quot;$(MsgInt)&quot; &quot;$(MsgRoot)\messages.mc&quot;" />
-    <Exec Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')"
-          Command="&quot;$(RcExe)&quot; /r /fo &quot;$(MsgInt)\messages.res&quot; &quot;$(MsgInt)\messages.rc&quot;" />
+    <Exec Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')" Command="&quot;$(McExe)&quot; -u -r &quot;$(MsgInt)&quot; -h &quot;$(MsgInt)&quot; &quot;$(MsgRoot)\messages.mc&quot;" />
+    <Exec Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')" Command="&quot;$(RcExe)&quot; /r /fo &quot;$(MsgInt)\messages.res&quot; &quot;$(MsgInt)\messages.rc&quot;" />
     <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and Exists('$(McExe)') and Exists('$(RcExe)')">
       <Win32Resource>$(MsgInt)\messages.res</Win32Resource>
       <GenerateWin32Manifest>false</GenerateWin32Manifest>
     </PropertyGroup>
 
     <!-- C) Fallback: no SDK and no prebuilt -> build without message table -->
-    <Message Text="Event messages: SDK not found and no prebuilt resource. Building WITHOUT message table. To restore clean text, either commit messages\messages.res or install Windows 10/11 SDK and rebuild."
-             Importance="high"
-             Condition="'$(UsePrebuilt)'!='true' and (!Exists('$(McExe)') or !Exists('$(RcExe)')) and !Exists('$(PrebuiltRes)')" />
+    <Message Text="Event messages: SDK not found and no prebuilt resource. Building WITHOUT message table. To restore clean text, either commit messages\messages.res or install Windows 10/11 SDK and rebuild." Importance="high" Condition="'$(UsePrebuilt)'!='true' and (!Exists('$(McExe)') or !Exists('$(RcExe)')) and !Exists('$(PrebuiltRes)')" />
     <PropertyGroup Condition="'$(UsePrebuilt)'!='true' and (!Exists('$(McExe)') or !Exists('$(RcExe)')) and !Exists('$(PrebuiltRes)')">
       <Win32Resource></Win32Resource>
       <GenerateWin32Manifest>true</GenerateWin32Manifest>
@@ -158,7 +154,7 @@
   </Target>
 
   <Target Name="GenerateInstallerProps" BeforeTargets="BeforeBuild">
-    <Exec Command='powershell -NoProfile -ExecutionPolicy Bypass -File "GenerateInstallerProps.ps1" -Out "Installer\GeneratedVariables.props"' />
-	  <Exec Command='powershell -NoProfile -ExecutionPolicy Bypass -File "GenerateInstallerProps.ps1" -Out "InstallerHelper\GeneratedVariables.props"' />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;GenerateInstallerProps.ps1&quot; -Out &quot;Installer\GeneratedVariables.props&quot;" />
+	  <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;GenerateInstallerProps.ps1&quot; -Out &quot;InstallerHelper\GeneratedVariables.props&quot;" />
   </Target>
 </Project>
