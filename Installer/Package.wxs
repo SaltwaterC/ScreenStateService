@@ -21,6 +21,7 @@
 			<ComponentRef Id="InstallFolderPerms" />
 			<ComponentRef Id="ServiceExe" />
 			<ComponentRef Id="InstallerHelperExe" />
+		    <ComponentRef Id="EventLogSource" />
 		</Feature>
 
 		<ui:WixUI Id="WixUI_Mondo" />
@@ -61,17 +62,6 @@
 					  GenericExecute="yes" />
 				</File>
 
-				<!-- Explicit Event Source registry (so Event Viewer resolves messages) -->
-				<RegistryKey Root="HKLM"
-							 Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\ScreenStateService">
-					<RegistryValue Name="EventMessageFile"
-								   Type="string"
-								   Value="[INSTALLFOLDER]ScreenStateService.exe"/>
-					<RegistryValue Name="TypesSupported"
-								   Type="integer"
-								   Value="7"/>
-				</RegistryKey>
-
 				<!-- Windows service -->
 				<ServiceInstall
 				  Id="ServiceInstaller"
@@ -86,7 +76,6 @@
 
 					<!-- Core service config (WiX built-in) -->
 					<ServiceConfig
-					  DelayedAutoStart="yes"
 					  ServiceSid="1"
 					  OnInstall="yes"
 					  OnReinstall="yes"
@@ -118,5 +107,13 @@
 			</Component>
 
 		</DirectoryRef>
+	</Fragment>
+	<Fragment>
+  		<Component Id="EventLogSource" Guid="88B82B86-3D9C-4EDB-9F91-070708E192C4">
+    		<util:EventSource
+        		Name="ScreenStateService"
+        		Log="Application"
+        		EventMessageFile="%windir%\Microsoft.NET\Framework\v4.0.30319\EventLogMessages.dll" />
+  		</Component>
 	</Fragment>
 </Wix>
