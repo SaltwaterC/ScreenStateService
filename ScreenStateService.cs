@@ -14,6 +14,7 @@ namespace ScreenStateService {
 
         // Win32
         const int CS_OWNDC = 0x20;
+        const uint WM_CLOSE = 0x0010;
         static readonly IntPtr HWND_MESSAGE = new IntPtr(-3);
 
         [StructLayout(LayoutKind.Sequential, Pack = 4)]
@@ -45,6 +46,9 @@ namespace ScreenStateService {
         [DllImport("user32.dll")] static extern bool DestroyWindow(IntPtr h);
         [DllImport("user32.dll", SetLastError = true)] static extern IntPtr RegisterPowerSettingNotification(IntPtr hRecipient, ref Guid guid, int flags);
         [DllImport("user32.dll", SetLastError = true)] static extern bool UnregisterPowerSettingNotification(IntPtr handle);
+        [DllImport("user32.dll")] static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+        [DllImport("user32.dll")] static extern void PostQuitMessage(int nExitCode);
+        [DllImport("kernel32.dll")] static extern IntPtr GetModuleHandle(string lpModuleName);
 
         Thread _thread;
         IntPtr _hwnd = IntPtr.Zero, _notify = IntPtr.Zero;
@@ -70,8 +74,9 @@ namespace ScreenStateService {
             try { EventLog.WriteEntry(ServiceName, "Service stopping.", EventLogEntryType.Information); } catch { }
 
             var hwnd = _hwnd;
-            if (hwnd != IntPtr.Zero) DestroyWindow(hwnd);
-            _thread?.Join(5000);
+            if (hwnd != IntPtr.Zero) PostMessage(hwnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+
+            if (_thread != null) _thread.Join(5000);
             _thread = null; _hwnd = IntPtr.Zero;
         }
 
@@ -80,6 +85,7 @@ namespace ScreenStateService {
             _proc = WndProcThunk;
 
             var wc = new WNDCLASSEX { cbSize = (uint)Marshal.SizeOf<WNDCLASSEX>(), lpfnWndProc = _proc, lpszClassName = "ScreenStateSvcMsgOnly", style = CS_OWNDC };
+            wc.hInstance = GetModuleHandle(null);
             if (RegisterClassEx(ref wc) == 0) return;
 
             _hwnd = CreateWindowEx(0, wc.lpszClassName, "ScreenStateSvcMsgOnly", 0, 0, 0, 0, 0, HWND_MESSAGE, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
@@ -98,6 +104,18 @@ namespace ScreenStateService {
 
         IntPtr WndProcThunk(IntPtr h, uint msg, IntPtr w, IntPtr l)
         {
+            if (msg == WM_CLOSE)
+            {
+                DestroyWindow(h);
+                return IntPtr.Zero;
+            }
+            if (msg == 0x0002 /* WM_DESTROY */)
+            {
+                if (_notify != IntPtr.Zero) { try { UnregisterPowerSettingNotification(_notify); } catch { } _notify = IntPtr.Zero; }
+                PostQuitMessage(0);
+                return IntPtr.Zero;
+            }
+
             if (msg == WM_POWERBROADCAST && w.ToInt32() == PBT_POWERSETTINGCHANGE && l != IntPtr.Zero)
             {
                 var pbs = (POWERBROADCAST_SETTING)Marshal.PtrToStructure(l, typeof(POWERBROADCAST_SETTING));
