@@ -52,7 +52,7 @@
 			<!-- Main service executable -->
 			<Component Id="ServiceExe" Guid="f47ac10b-58cc-4372-a567-0e02b2c3d479">
 				<File Id="SvcExe"
-					  Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\ScreenStateService.exe"
+					  Source="$(SolutionDir)\bin\$(Platform)\$(Configuration)\ScreenStateService.exe"
 					  KeyPath="yes">
 					<!-- Explicit RX on the file in case inheritance is blocked -->
 					<util:PermissionEx

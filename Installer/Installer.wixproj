@@ -9,6 +9,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutputPath>..\bin\x64\Debug\</OutputPath>
   </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+		<OutputPath>..\bin\x86\Release\</OutputPath>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+		<OutputPath>..\bin\x86\Debug\</OutputPath>
+	</PropertyGroup>
   <PropertyGroup>
 	<!-- util:ServiceConfig is not a 1:1 replacement for ServiceConfig -->
     <NoWarn>WIX1149</NoWarn>
@@ -22,10 +28,16 @@
   <ItemGroup>
     <PackageReference Include="WixToolset.Util.wixext" Version="6.0.1" />
   </ItemGroup>
+
   <Target Name="GenerateWiXVariables" BeforeTargets="BeforeBuild">
     <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)GenerateWiXVariables.ps1&quot;" />
   </Target>
-	<!-- Replace your Cleanup target with this (or just remove it completely) -->
+
+  <Target Name="VerifyMsiArch" AfterTargets="Build">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)VerifyArch.ps1&quot; -Expected &quot;$(Platform)&quot; -Msi &quot;$(TargetPath)&quot;" />
+  </Target>
+
+
 	<Target Name="Cleanup" AfterTargets="Clean">
 		<Delete Files="$(ProjectDir)GeneratedVariables.props" />
 		<Delete Files="$(ProjectDir)GeneratedVariables.wxi" />

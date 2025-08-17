@@ -1,8 +1,6 @@
-# GenerateWiXVariables.ps1 (PowerShell 5.1 compatible, robust, now with TargetFramework)
 param(
   [string]$Project = '..\ScreenStateService.csproj',
-  [string]$Out = 'GeneratedVariables.wxi',
-  [string]$UpstreamProjectDir = $null
+  [string]$Out = 'GeneratedVariables.wxi'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,13 +23,6 @@ if (-not [System.IO.Path]::IsPathRooted($Out)) {
   $outPath = [System.IO.Path]::GetFullPath((Join-Path $scriptDir $Out))
 } else {
   $outPath = $Out
-}
-
-# Resolve upstream project dir
-if (-not $UpstreamProjectDir) {
-  $UpstreamProjectDir = [System.IO.Path]::GetFullPath((Join-Path $scriptDir '..'))
-} elseif (-not [System.IO.Path]::IsPathRooted($UpstreamProjectDir)) {
-  $UpstreamProjectDir = [System.IO.Path]::GetFullPath((Join-Path $scriptDir $UpstreamProjectDir))
 }
 
 [xml]$csproj = Get-Content -LiteralPath $projPath
@@ -75,18 +66,6 @@ $rawVersion = First-NonEmpty @(
 )
 $productVersion = To-MsiVersion $rawVersion
 
-# --- TargetFramework (robust) ---
-$targetFramework = Get-MsBuildProperty $csproj 'TargetFramework'
-if (-not $targetFramework) {
-    $tfms = Get-MsBuildProperty $csproj 'TargetFrameworks'
-    if ($tfms) {
-        $targetFramework = ($tfms -split ';')[0]
-    }
-}
-
-# Escape backslashes for WiX
-$escapedUpstream = $UpstreamProjectDir -replace '\\','\\'
-
 # Ensure output directory exists
 $outDir = [System.IO.Path]::GetDirectoryName($outPath)
 if ($outDir -and -not (Test-Path -LiteralPath $outDir)) {
@@ -99,8 +78,6 @@ $content = @"
 <Include>
   <?define ProductVersion="$productVersion" ?>
   <?define Manufacturer="$companyRaw" ?>
-  <?define UpstreamProjectDir="$escapedUpstream" ?>
-  <?define TargetFramework="$targetFramework" ?>
 </Include>
 "@
 
@@ -109,5 +86,3 @@ Set-Content -LiteralPath $outPath -Value $content -Encoding UTF8
 Write-Host "Generated WiX variables to $outPath"
 Write-Host "  ProductVersion    = $productVersion   (from '$rawVersion')"
 Write-Host "  Manufacturer      = $companyRaw"
-Write-Host "  UpstreamProjectDir= $UpstreamProjectDir"
-Write-Host "  TargetFramework   = $targetFramework"
