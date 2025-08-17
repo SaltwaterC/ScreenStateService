@@ -22,12 +22,9 @@
     <!-- Entry point -->
     <StartupObject>ScreenStateService.Program</StartupObject>
 
-    <!-- Message assets -->
-    <MsgRoot>$(MSBuildProjectDirectory)\messages</MsgRoot>
-
     <!-- Default: no Win32Resource unless prebuilt exists -->
     <GenerateWin32Manifest>true</GenerateWin32Manifest>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <!-- Framework assembly references -->
@@ -37,24 +34,7 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
 
-  <!-- Belt & braces: never compile from sibling projects; avoid accidental extra Main() -->
-  <ItemGroup>
-    <Compile Remove="..\InstallerHelper\**\*.cs" />
-    <Compile Remove="..\Installer\**\*.cs" />
-    <None Remove="..\InstallerHelper\**\*" />
-    <None Remove="..\Installer\**\*" />
-  </ItemGroup>
-
-  <!-- Be strict: never compile anything from bin/obj -->
-  <ItemGroup>
-    <Compile Remove="obj\**\*.cs" />
-    <Compile Remove="bin\**\*.cs" />
-    <None Remove="obj\**\*" />
-    <None Remove="bin\**\*" />
-  </ItemGroup>
-
   <Target Name="GenerateInstallerProps" BeforeTargets="BeforeBuild">
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;GenerateInstallerProps.ps1&quot; -Out &quot;Installer\GeneratedVariables.props&quot;" />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;GenerateInstallerProps.ps1&quot; -Out &quot;InstallerHelper\GeneratedVariables.props&quot;" />
   </Target>
 </Project>

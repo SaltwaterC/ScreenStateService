@@ -20,7 +20,6 @@
 		<Feature Id="ProductFeature" Title="ScreenStateService" Level="1">
 			<ComponentRef Id="InstallFolderPerms" />
 			<ComponentRef Id="ServiceExe" />
-			<ComponentRef Id="InstallerHelperExe" />
 		    <ComponentRef Id="EventLogSource" />
 		</Feature>
 
@@ -98,14 +97,6 @@
 				  Remove="both"
 				  Wait="yes" />
 			</Component>
-
-			<!-- Installer helper utility -->
-			<Component Id="InstallerHelperExe" Guid="a74a41eb-53e4-4fcb-9f5f-5f3c21d2c4d1">
-				<File
-				  Source="$(var.UpstreamProjectDir)\bin\$(Configuration)\$(var.TargetFramework)\InstallerHelper.exe"
-				  KeyPath="yes" />
-			</Component>
-
 		</DirectoryRef>
 	</Fragment>
 	<Fragment>
