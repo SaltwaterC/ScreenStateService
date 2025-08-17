@@ -27,6 +27,11 @@
 		<WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
 
 		<Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+
+		<InstallExecuteSequence>
+			<!-- Request reboot at the end of install if upgrading -->
+			<ScheduleReboot After="InstallFinalize" Condition="UPGRADINGPRODUCTCODE" />
+		</InstallExecuteSequence>
 	</Package>
 
 	<!-- Install under Program Files (x86) like your original authoring -->
