@@ -32,6 +32,14 @@
 			<!-- Request reboot at the end of install if upgrading -->
 			<ScheduleReboot After="InstallFinalize" Condition="UPGRADINGPRODUCTCODE" />
 		</InstallExecuteSequence>
+
+		<Property Id="DOTNET4X_FULLPATH" Secure="yes">
+			<RegistrySearch
+				Root="HKLM"
+				Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+				Name="InstallPath"
+				Type="raw" />
+		</Property>
 	</Package>
 
 	<!-- Install under Program Files (x86) like your original authoring -->
@@ -105,11 +113,11 @@
 		</DirectoryRef>
 	</Fragment>
 	<Fragment>
-  		<Component Id="EventLogSource" Guid="88B82B86-3D9C-4EDB-9F91-070708E192C4">
-    		<util:EventSource
-        		Name="ScreenStateService"
-        		Log="Application"
-        		EventMessageFile="%windir%\Microsoft.NET\Framework\v4.0.30319\EventLogMessages.dll" />
-  		</Component>
+		<Component Id="EventLogSource" Guid="88B82B86-3D9C-4EDB-9F91-070708E192C4">
+			<util:EventSource
+				Name="ScreenStateService"
+				Log="Application"
+				EventMessageFile="[DOTNET4X_FULLPATH]EventLogMessages.dll" />
+		</Component>
 	</Fragment>
 </Wix>
